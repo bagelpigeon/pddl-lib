@@ -277,6 +277,7 @@ cEffect
 	: '(' 'forall' '(' typedVariableList ')' effect ')'
 	| '(' 'when' goalDesc condEffect ')'
 	| pEffect
+	| probEffect
 	;
 
 pEffect
@@ -284,7 +285,14 @@ pEffect
 	| '(' 'not' atomicTermFormula ')'
 	| atomicTermFormula
 	;
+	
+probEffect
+	: 'probabilistic' (probability cEffect)*
+	;
 
+probability
+	: NUMBER
+	;
 
 // TODO: why is this different from the "and cEffect" above? Does it matter?
 condEffect
