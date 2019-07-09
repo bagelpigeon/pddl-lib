@@ -19,9 +19,9 @@
 #
 
 from antlr4 import *
-from .pddlLexer import pddlLexer
-from .pddlParser import pddlParser
-from .pddlListener import pddlListener
+from pddlLexer import pddlLexer
+from pddlParser import pddlParser
+from pddlListener import pddlListener
 
 import itertools
 
@@ -381,5 +381,10 @@ class DomainProblem():
 
 
 if __name__ == '__main__':
-    pass
+    domainfile = "bomb-toilet-domain.pddl"
+    problemfile = "bomb-toilet-problem.pddl"
 
+    domprob = DomainProblem(domainfile, problemfile)
+    print(domprob.initialstate())
+    #print(list(domprob.ground_operator('move'))[0].effect_pos)
+    #print(list(domprob.ground_operator('move'))[0].effect_neg)

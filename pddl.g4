@@ -287,8 +287,12 @@ pEffect
 	;
 	
 probEffect
-	: 'probabilistic' (probability cEffect)*
+	: '(' 'probabilistic' probabilityEffect* ')'
 	;
+
+probabilityEffect
+    : probability cEffect
+    ;
 
 probability
 	: NUMBER
@@ -397,7 +401,11 @@ initEl
 	: nameLiteral
 	| '(' '=' fHead NUMBER ')'         
 	| '(' 'at' NUMBER nameLiteral ')'
-	;
+	| '(' 'probabilistic' probInitEl* ')';
+
+probInitEl
+    : probability atomicNameFormula
+    ;
 
 nameLiteral
 	: atomicNameFormula
@@ -476,6 +484,7 @@ REQUIRE_KEY
     | ':universal-preconditions'
     | ':quantified-preconditions'
     | ':conditional-effects'
+    | ':probabilistic-effects'
     | ':fluents'
     | ':adl'
     | ':durative-actions'

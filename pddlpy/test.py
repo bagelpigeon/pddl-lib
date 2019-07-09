@@ -1,9 +1,9 @@
 import unittest
 from pddlpy import DomainProblem
-
+'''
 class TestStringMethods(unittest.TestCase):
-    domainfile = "examples-pddl/domain-0%d.pddl" % 1
-    problemfile = "examples-pddl/problem-0%d.pddl" % 1
+    domainfile = "domain-0%d.pddl" % 1
+    problemfile = "problem-0%d.pddl" % 1
 
     def test_ground(self):
         domprob = DomainProblem(self.domainfile, self.problemfile)
@@ -14,7 +14,16 @@ class TestStringMethods(unittest.TestCase):
                 self.assertTrue(True)
                 return
         self.assertFalse("Missed a value")
+'''
+def testppddl():
+
+    domainfile = "domain-0%d.pddl" % 1
+    problemfile = "problem-0%d.pddl" % 1
+
+
+    domprob = DomainProblem(domainfile, problemfile)
+    print(domprob.initialstate())
 
 if __name__ == '__main__':
-    unittest.main()
+    testppddl()
 
