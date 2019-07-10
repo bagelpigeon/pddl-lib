@@ -22,6 +22,7 @@ from antlr4 import *
 from pddlLexer import pddlLexer
 from pddlParser import pddlParser
 from pddlListener import pddlListener
+from pddlVisitor import pddlVisitor
 
 import itertools
 
@@ -44,7 +45,6 @@ class Scope():
 
     def addatom(self, atom):
         self.atoms.append(atom)
-
     def addnegatom(self, atom):
         self.negatoms.append(atom)
 
@@ -134,6 +134,7 @@ class DomainListener(pddlListener):
         # print("-> terf")
         neg = self.negativescopes[-1]
         pred = []
+
         for c in ctx.getChildren():
             n = c.getText()
             if n == '(' or n == ')':
@@ -237,6 +238,7 @@ class ProblemListener(pddlListener):
         pred = []
         for c in ctx.getChildren():
             n = c.getText()
+
             if n == '(' or n == ')':
                 continue
             pred.append(n)
@@ -282,6 +284,34 @@ class ProblemListener(pddlListener):
                     vs.add( (s, None) )
             self.objects = dict( vs )
 
+class VisitorEvaluator(pddlVisitor):
+    def visitProbabilityEffect(self,ctx):
+        print(ctx.getText())
+
+    def visitProbEffect(self,ctx):
+        self.visitProbabilityEffect(ctx.probabilityEffect()[0])
+
+    def visitActionDefBody(self,ctx):
+        print(ctx.getText())
+        self.visitEffect(ctx.effect())
+
+    def visitEffect(self,ctx):
+        self.visitCEffect(ctx.cEffect()[0])
+        self.visitCEffect(ctx.cEffect()[1])
+
+    def visitCEffect(self,ctx):
+        print("ceffect:", ctx.getText())
+        #if this is a when clause
+        if ctx.goalDesc() is not None:
+            self.visitGoalDesc(ctx.goalDesc())
+        #else if it is an effect that will happen regardless then no goal desc at all.
+
+    def visitGoalDesc(self,ctx):
+        print("goal desc:", ctx.getText())
+
+    def visitCondEffect(self,ctx):
+        print("cond effect from goal", ctx.getText())
+
 
 class DomainProblem():
 
@@ -297,10 +327,10 @@ class DomainProblem():
         lexer = pddlLexer(inp)
         stream = CommonTokenStream(lexer)
         parser = pddlParser(stream)
-        tree = parser.domain()
+        self.tree = parser.domain()
         self.domain = DomainListener()
         walker = ParseTreeWalker()
-        walker.walk(self.domain, tree)
+        walker.walk(self.domain, self.tree)
         # problem
         inp = FileStream(problemfile)
         lexer = pddlLexer(inp)
@@ -310,6 +340,7 @@ class DomainProblem():
         self.problem = ProblemListener()
         walker = ParseTreeWalker()
         walker.walk(self.problem, tree)
+        self.visitor = VisitorEvaluator()
         # variable ground space for each operator.
         # a dict where keys are op names and values
         # a dict where keys are var names and values
@@ -378,6 +409,8 @@ class DomainProblem():
         """
         return dict( self.domain.objects.items() | self.problem.objects.items() )
 
+    def teststuff(self):
+        self.visitor.visit(self.tree)
 
 
 if __name__ == '__main__':
@@ -385,6 +418,6 @@ if __name__ == '__main__':
     problemfile = "bomb-toilet-problem.pddl"
 
     domprob = DomainProblem(domainfile, problemfile)
-    print(domprob.initialstate())
-    #print(list(domprob.ground_operator('move'))[0].effect_pos)
+    #print(list(domprob.ground_operator('dunk-package'))[0])
     #print(list(domprob.ground_operator('move'))[0].effect_neg)
+    domprob.teststuff()

@@ -43,7 +43,7 @@ testgrammar: pddl.g4
 
 pyparser: pddl.g4
 	mkdir -p pddlpy && \
-	$(ANTLR) $(ANTLRLANG) -o pddlpy pddl.g4
+	$(ANTLR) $(ANTLRLANG) -visitor -o pddlpy pddl.g4
 
 pytest: pyparser pddlpy/pddl.py
 	$(PYTHON) -m pddlpy.test

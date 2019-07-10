@@ -295,7 +295,7 @@ probabilityEffect
     ;
 
 probability
-	: NUMBER
+	: NUMBER #PROB
 	;
 
 // TODO: why is this different from the "and cEffect" above? Does it matter?
