@@ -528,3 +528,5 @@ WHITESPACE
         )+
         -> skip
     ;
+
+WHEN : '(' 'when' ')'

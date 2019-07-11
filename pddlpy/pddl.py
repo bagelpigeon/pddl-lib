@@ -23,8 +23,11 @@ from pddlLexer import pddlLexer
 from pddlParser import pddlParser
 from pddlListener import pddlListener
 from pddlVisitor import pddlVisitor
+from actions import Actions
+import numpy as np
 
 import itertools
+from itertools import permutations
 
 
 class Atom():
@@ -285,33 +288,146 @@ class ProblemListener(pddlListener):
             self.objects = dict( vs )
 
 class VisitorEvaluator(pddlVisitor):
+    def __init__(self, actions):
+        self.actions = actions
+
     def visitProbabilityEffect(self,ctx):
-        print(ctx.getText())
+        print("probability", ctx.getText())
+        prob = self.visitPROB(ctx.probability())
+        effect = self.visitCEffect(ctx.cEffect())
+        return prob, effect
 
     def visitProbEffect(self,ctx):
-        self.visitProbabilityEffect(ctx.probabilityEffect()[0])
+        prob = 0
+        probValueList = []
+        probEffectList = []
+        probtfList = []
+        #here, we want to know all of the probabilistic effects (there may be more than 1)
+        for probEffectIndex in range (len(ctx.probabilityEffect())):
+            probValue, probEffect = self.visitProbabilityEffect(ctx.probabilityEffect()[probEffectIndex])
+            prob += probValue
+            probValueList.append(probValue)
+            probEffectList.append(probEffect)
+            probtfList.append(True)
+        print("total prob:", prob)
 
+        if prob < 1.0:
+            #handle the null action's prob
+            nullProb = 1.0 - prob
+            probValueList.append(nullProb)
+            probEffectList.append("null effect")
+            probtfList.append(True)
+
+        return probValueList, probEffectList, probtfList
+
+
+    #may want to start in action (one level above, get name, find associated matrix)
+    #otherwise this is start point
     def visitActionDefBody(self,ctx):
-        print(ctx.getText())
+        print("actiondef", ctx.getText())
         self.visitEffect(ctx.effect())
 
+    '''
+    effect
+	    : '(' 'and' cEffect* ')' 
+	    | cEffect
+	    ;
+    '''
     def visitEffect(self,ctx):
-        self.visitCEffect(ctx.cEffect()[0])
-        self.visitCEffect(ctx.cEffect()[1])
+        #within here we want a loop going over all of the effects
+        #and indicates a list of effects
+        #if and then do a forall
+        if '(and' in ctx.getText():
+            for effectIndex in range(len(ctx.cEffect())):
+                self.visitCEffect(ctx.cEffect()[effectIndex])
+        #if no and then just handle one effect
 
+    def visitPEffect(self,ctx):
+        return ctx.getText()
+
+    '''
+    cEffect
+        : '(' 'forall' '(' typedVariableList ')' effect ')'
+        | '(' 'when' goalDesc condEffect ')'
+        | pEffect
+        | probEffect
+        ;
+    '''
     def visitCEffect(self,ctx):
-        print("ceffect:", ctx.getText())
-        #if this is a when clause
+        goalPatternVector = np.full(self.actions.getNumPredicates(), -1)
+        targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
+        #if this is a when clause meaning it has an if condition
         if ctx.goalDesc() is not None:
-            self.visitGoalDesc(ctx.goalDesc())
-        #else if it is an effect that will happen regardless then no goal desc at all.
+            goalIndex, value = self.visitGoalDesc(ctx.goalDesc())
+            goalPatternVector[goalIndex] = value
+        #else if it is an effect that will happen regardless then no goal desc at all
+        if ctx.probEffect() is not None:
+            probValueList, probEffectList, tfvalueList = self.visitProbEffect(ctx.probEffect())
+            print("list of effects", probEffectList)
+            print("List of value of probs", probValueList)
+            for probIndex in range(len(probEffectList)):
+                targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
+                #must alter target pattern vector each time
+                #have this as one (true for now)
+                predIndex = self.actions.getPredicateIndex(probEffectList[probIndex])
+                targetPatternVector[probIndex] = predIndex
+                self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
+        #else just consider as a regular 100% will happen effect
+        if ctx.pEffect() is not None:
+            print("Looking for toilet clogged", ctx.getText())
+            self.visitPEffect(ctx.pEffect())
+
+
+        #have to pass in name of action through function
+
+    def visitPredicate(self, ctx):
+        return ctx.getText()
+
+    def visitTerm(self,ctx):
+        if ctx.getText() == None:
+            return ""
+        return ctx.getText()
+
+    def visitAtomicTermFormula(self,ctx):
+        print("atomicterm: ", ctx.getText())
+        if ctx.term() == []:
+            term = ""
+        else:
+            term = self.visitTerm(ctx.term()[0])
+        return self.visitPredicate(ctx.predicate()) + term
 
     def visitGoalDesc(self,ctx):
-        print("goal desc:", ctx.getText())
+        #account for all objects later
+
+        text = self.visitAtomicTermFormula(ctx.atomicTermFormula())
+        print("goaldesc", text)
+        predIndex = self.actions.getPredicateIndex(text)
+        #-1 as a fill value for all values that are allowed to be wildcards
+        goalStateEncode = np.full(self.actions.getNumPredicates(), -1)
+
+        #if goal desc has a not, this should return a false!
+        if '(not' in ctx.getText():
+            value = False
+        else:
+            value = True
+        return predIndex, value
 
     def visitCondEffect(self,ctx):
         print("cond effect from goal", ctx.getText())
 
+    def visitPROB(self,ctx):
+        return float(ctx.getText())
+
+    '''
+    pEffect
+        : '(' assignOp fHead fExp ')'
+        | '(' 'not' atomicTermFormula ')'
+        | atomicTermFormula
+        ;
+    '''
+    def visitPEffect(self,ctx):
+        print("peffect")
+        return self.visitAtomicTermFormula(ctx.atomicTermFormula())
 
 class DomainProblem():
 
@@ -340,7 +456,8 @@ class DomainProblem():
         self.problem = ProblemListener()
         walker = ParseTreeWalker()
         walker.walk(self.problem, tree)
-        self.visitor = VisitorEvaluator()
+        actions = self.createActions()
+        self.visitor = VisitorEvaluator(actions)
         # variable ground space for each operator.
         # a dict where keys are op names and values
         # a dict where keys are var names and values
@@ -412,12 +529,21 @@ class DomainProblem():
     def teststuff(self):
         self.visitor.visit(self.tree)
 
+    def createActions(self):
+        actions = Actions()
+        return actions
+
+def getCombinations(n):
+    lst = list(itertools.product([0, 1], repeat=n))
+    return lst
 
 if __name__ == '__main__':
     domainfile = "bomb-toilet-domain.pddl"
     problemfile = "bomb-toilet-problem.pddl"
 
     domprob = DomainProblem(domainfile, problemfile)
+    domprob.createActions()
     #print(list(domprob.ground_operator('dunk-package'))[0])
     #print(list(domprob.ground_operator('move'))[0].effect_neg)
     domprob.teststuff()
+    #print(list(domprob.ground_operator("dunk-package"))[0])
