@@ -79,9 +79,9 @@ class Actions():
             row = rowsToChange[i]
             state = self.stateEncodings[i]
             nextState = self.getNextState(state, effectVectorPattern)
-            for j in range(len(columnsToChange)):
-                if self.exactMatchStateEncodings(self.stateEncodings[j], nextState):
-                    column = columnsToChange[j]
+            for column in columnsToChange:
+                if self.exactMatchStateEncodings(self.stateEncodings[column], nextState):
+                    #column = columnsToChange[j]
                     if tMatrixOfAction[row][column] == 0:
                         tMatrixOfAction[row][column] = prob
                     else:
