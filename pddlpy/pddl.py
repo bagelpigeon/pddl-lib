@@ -294,7 +294,10 @@ class VisitorEvaluator(pddlVisitor):
     def visitProbabilityEffect(self,ctx):
         print("probability", ctx.getText())
         prob = self.visitPROB(ctx.probability())
+
+
         effect = self.visitCEffect(ctx.cEffect())
+        print(effect)
         return prob, effect
 
     def visitProbEffect(self,ctx):
@@ -315,7 +318,7 @@ class VisitorEvaluator(pddlVisitor):
             #handle the null action's prob
             nullProb = 1.0 - prob
             probValueList.append(nullProb)
-            probEffectList.append("null effect")
+            probEffectList.append('null')
             probtfList.append(True)
 
         return probValueList, probEffectList, probtfList
@@ -361,21 +364,24 @@ class VisitorEvaluator(pddlVisitor):
             goalIndex, value = self.visitGoalDesc(ctx.goalDesc())
             goalPatternVector[goalIndex] = value
         #else if it is an effect that will happen regardless then no goal desc at all
+        #else just consider as a regular 100% will happen effect
+        if ctx.pEffect() is not None:
+            return self.visitPEffect(ctx.pEffect())
+
+        if ctx.effect() is not None:
+            effect = self.visitEffect(ctx.effect())
+
         if ctx.probEffect() is not None:
             probValueList, probEffectList, tfvalueList = self.visitProbEffect(ctx.probEffect())
-            print("list of effects", probEffectList)
-            print("List of value of probs", probValueList)
             for probIndex in range(len(probEffectList)):
                 targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
                 #must alter target pattern vector each time
                 #have this as one (true for now)
                 predIndex = self.actions.getPredicateIndex(probEffectList[probIndex])
-                targetPatternVector[probIndex] = predIndex
+                if predIndex != -1:
+                    targetPatternVector[predIndex] = tfvalueList[probIndex]
+                print(probValueList[probIndex])
                 self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
-        #else just consider as a regular 100% will happen effect
-        if ctx.pEffect() is not None:
-            print("Looking for toilet clogged", ctx.getText())
-            self.visitPEffect(ctx.pEffect())
 
 
         #have to pass in name of action through function
@@ -389,12 +395,12 @@ class VisitorEvaluator(pddlVisitor):
         return ctx.getText()
 
     def visitAtomicTermFormula(self,ctx):
-        print("atomicterm: ", ctx.getText())
         if ctx.term() == []:
             term = ""
         else:
             term = self.visitTerm(ctx.term()[0])
-        return self.visitPredicate(ctx.predicate()) + term
+        pred = self.visitPredicate(ctx.predicate())
+        return pred + term
 
     def visitGoalDesc(self,ctx):
         #account for all objects later
@@ -426,8 +432,9 @@ class VisitorEvaluator(pddlVisitor):
         ;
     '''
     def visitPEffect(self,ctx):
-        print("peffect")
-        return self.visitAtomicTermFormula(ctx.atomicTermFormula())
+        peffect = self.visitAtomicTermFormula(ctx.atomicTermFormula())
+        print("peffect", peffect)
+        return peffect
 
 class DomainProblem():
 
@@ -530,8 +537,8 @@ class DomainProblem():
         self.visitor.visit(self.tree)
 
     def createActions(self):
-        actions = Actions()
-        return actions
+        self.actions = Actions()
+        return self.actions
 
 def getCombinations(n):
     lst = list(itertools.product([0, 1], repeat=n))
