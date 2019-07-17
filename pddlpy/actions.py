@@ -9,6 +9,7 @@ class Actions():
         # list of matrices, access
         self.transitionMatrices = []
         self.predicateDict = {"bomb-in-package?pkg":0, "bomb-in-package2": 1, "toilet-clogged": 2, "bomb-defused":3}
+        #self.predicateDict = {"bomb-in-package?pkg": 0, "toilet-clogged": 1, "bomb-defused": 2}
         self.stateEncodings = []
         self.createMatrices()
         self.TRUE = 1
@@ -79,13 +80,16 @@ class Actions():
             row = rowsToChange[i]
             state = self.stateEncodings[i]
             nextState = self.getNextState(state, effectVectorPattern)
-            for column in columnsToChange:
-                if self.exactMatchStateEncodings(self.stateEncodings[column], nextState):
-                    #column = columnsToChange[j]
-                    if tMatrixOfAction[row][column] == 0:
-                        tMatrixOfAction[row][column] = prob
-                    else:
-                        tMatrixOfAction[row][column] *= prob
+
+            #means the state did not change
+            if self.exactMatchStateEncodings(nextState, state) != True:
+                for column in columnsToChange:
+                    if self.exactMatchStateEncodings(self.stateEncodings[column], nextState):
+                        #column = columnsToChange[j]
+                        if tMatrixOfAction[row][column] == 0:
+                            tMatrixOfAction[row][column] = prob
+                        else:
+                            tMatrixOfAction[row][column] *= prob
         print(self.printInfo())
 
     def getPredicateIndex(self, nameOfPredicate):

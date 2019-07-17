@@ -24,6 +24,8 @@ from pddlParser import pddlParser
 from pddlListener import pddlListener
 from pddlVisitor import pddlVisitor
 from actions import Actions
+from effect import Effect
+import itertools
 import numpy as np
 
 import itertools
@@ -340,9 +342,21 @@ class VisitorEvaluator(pddlVisitor):
         #within here we want a loop going over all of the effects
         #and indicates a list of effects
         #if and then do a forall
+        listOfEffects = []
         if '(and' in ctx.getText():
             for effectIndex in range(len(ctx.cEffect())):
-                self.visitCEffect(ctx.cEffect()[effectIndex])
+                effect = self.visitCEffect(ctx.cEffect()[effectIndex])
+                if effect is not None:
+                    listOfEffects.append(effect)
+        #get combinations of all effects within the and
+        for combination in itertools.product(list(effect.effectList for effect in listOfEffects)):
+            print(combination)
+
+        for combination in itertools.product(list(effect.probList for effect in listOfEffects)):
+            print(combination)
+        #get individual effect vectors for each combo of effects
+        #get indiv prob for each effect vector (should be same length as number of individual effect vectors
+
         #if no and then just handle one effect
 
     def visitPEffect(self,ctx):
@@ -372,8 +386,12 @@ class VisitorEvaluator(pddlVisitor):
             effect = self.visitEffect(ctx.effect())
 
         if ctx.probEffect() is not None:
+
             probValueList, probEffectList, tfvalueList = self.visitProbEffect(ctx.probEffect())
-            for probIndex in range(len(probEffectList)):
+            #create probEffect
+            probEffect = Effect(probEffectList, tfvalueList, probValueList)
+            return probEffect
+            '''for probIndex in range(len(probEffectList)):
                 targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
                 #must alter target pattern vector each time
                 #have this as one (true for now)
@@ -382,7 +400,7 @@ class VisitorEvaluator(pddlVisitor):
                     targetPatternVector[predIndex] = tfvalueList[probIndex]
                 print(probValueList[probIndex])
                 self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
-
+            '''
 
         #have to pass in name of action through function
 
@@ -431,9 +449,13 @@ class VisitorEvaluator(pddlVisitor):
         | atomicTermFormula
         ;
     '''
+    #how to adjust for (not (negatives?
     def visitPEffect(self,ctx):
+        #check if pEffect is true/false
         peffect = self.visitAtomicTermFormula(ctx.atomicTermFormula())
+        peffect = Effect([peffect], [True], [1.0])
         print("peffect", peffect)
+        #temp true for now
         return peffect
 
 class DomainProblem():
