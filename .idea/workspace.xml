@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="200a4c63-8773-4ce4-bfdb-aede54cd402f" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/pddlpy/effect.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pddlpy/effects.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pddlpy/actions.py" beforeDir="false" afterPath="$PROJECT_DIR$/pddlpy/actions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pddl.g4" beforeDir="false" afterPath="$PROJECT_DIR$/pddl.g4" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pddlpy/effect.py" beforeDir="false" afterPath="$PROJECT_DIR$/pddlpy/effect.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pddlpy/pddl.py" beforeDir="false" afterPath="$PROJECT_DIR$/pddlpy/pddl.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -30,8 +31,8 @@
             <file pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/pddlpy/bomb-toilet-domain.pddl">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="135">
-                    <caret line="9" column="23" selection-start-line="9" selection-start-column="23" selection-end-line="9" selection-end-column="23" />
+                  <state relative-caret-position="165">
+                    <caret line="11" column="20" selection-start-line="11" selection-start-column="20" selection-end-line="11" selection-end-column="20" />
                   </state>
                 </provider>
               </entry>
@@ -46,8 +47,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pddlpy/pddl.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="400" column="47" lean-forward="true" selection-start-line="400" selection-start-column="47" selection-end-line="400" selection-end-column="47" />
+            <state relative-caret-position="210">
+              <caret line="384" column="44" selection-start-line="384" selection-start-column="44" selection-end-line="384" selection-end-column="44" />
               <folding>
                 <element signature="e#631#651#0" expanded="true" />
               </folding>
@@ -56,9 +57,18 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pddlpy/pddlParser.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="168">
+              <caret line="3749" selection-start-line="3749" selection-end-line="3749" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pddlpy/actions.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1177">
+            <state relative-caret-position="1257">
               <caret line="86" column="47" selection-start-line="86" selection-start-column="47" selection-end-line="86" selection-end-column="47" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
@@ -68,17 +78,12 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pddlpy/effect.py">
+        <entry file="file://$PROJECT_DIR$/pddlpy/effects.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="10" column="40" lean-forward="true" selection-start-line="10" selection-start-column="40" selection-end-line="10" selection-end-column="40" />
+            <state relative-caret-position="75">
+              <caret line="5" column="30" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="30" />
             </state>
           </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/examples/get_eaten.pddl">
-          <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
@@ -89,15 +94,10 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/examples/john.pddl">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="540">
-              <caret line="36" selection-start-line="36" selection-end-line="36" />
+            <state relative-caret-position="450">
+              <caret line="30" column="75" selection-start-line="30" selection-start-column="75" selection-end-line="30" selection-end-column="75" />
             </state>
           </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/examples/ext-slippery-gripper-domain.pddl">
-          <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
@@ -113,10 +113,15 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pddl.g4">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4140">
-              <caret line="276" column="45" selection-start-line="276" selection-start-column="45" selection-end-line="276" selection-end-column="51" />
+            <state relative-caret-position="-504">
+              <caret line="278" column="5" selection-start-line="278" selection-start-column="5" selection-end-line="278" selection-end-column="13" />
             </state>
           </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Makefile">
+          <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
     </leaf>
@@ -130,7 +135,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>requirement</find>
       <find>conditional</find>
       <find>init</find>
       <find>generator</find>
@@ -159,6 +163,8 @@
       <find>visitCE</find>
       <find>effec</find>
       <find>null</find>
+      <find>condEffec</find>
+      <find>combined</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -171,17 +177,18 @@
         <option value="$PROJECT_DIR$/pddlpy/test.py" />
         <option value="$PROJECT_DIR$/pddlpy/bomb-toilet-problem.pddl" />
         <option value="$PROJECT_DIR$/pddlpy/bomb-toilet-domain.pddl" />
-        <option value="$PROJECT_DIR$/pddl.g4" />
         <option value="$PROJECT_DIR$/pddlpy/actions.py" />
         <option value="$PROJECT_DIR$/pddlpy/effect.py" />
+        <option value="$PROJECT_DIR$/pddlpy/effects.py" />
+        <option value="$PROJECT_DIR$/pddl.g4" />
         <option value="$PROJECT_DIR$/pddlpy/pddl.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="678" />
-    <option name="y" value="148" />
-    <option name="width" value="1504" />
+    <option name="x" value="74" />
+    <option name="y" value="55" />
+    <option name="width" value="1759" />
     <option name="height" value="986" />
   </component>
   <component name="ProjectView">
@@ -189,7 +196,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -211,11 +217,12 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/pddl.g4" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/pddlpy" />
     <property name="settings.editor.selected.configurable" value="preferences.editor" />
   </component>
   <component name="RecentsManager">
@@ -308,16 +315,16 @@
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="678" y="148" width="1504" height="986" extended-state="0" />
+    <frame x="74" y="55" width="1759" height="986" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23160027" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.19758065" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.38506418" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.377804" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.37689614" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -329,6 +336,22 @@
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
     </layout>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/pddlpy/pddl.py</url>
+          <line>303</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/pddlpy/pddl.py</url>
+          <line>296</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="breakpointCondition">
@@ -380,6 +403,21 @@
     </expressions>
     <expressions id="evaluateExpression">
       <expression>
+        <expression-string>combinedEffects.valueList</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>effect1.valueList</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>combination</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
         <expression-string>nextState</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
@@ -411,16 +449,6 @@
       </expression>
       <expression>
         <expression-string>stateEncodings[j]</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>stateVectorPattern</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>print(ctx.cEffect())</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
@@ -512,13 +540,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pddlpy/pddlParser.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="13005">
-          <caret line="870" selection-start-line="870" selection-end-line="870" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/antlr4/tree/Tree.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="495">
@@ -555,16 +576,6 @@
     <entry file="file://$PROJECT_DIR$/examples/get_eaten.pddl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/bomb-toilet-problem.pddl">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/john.pddl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
-          <caret line="36" selection-start-line="36" selection-end-line="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/examples/ext-slippery-gripper-domain.pddl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -574,10 +585,13 @@
     <entry file="file://$PROJECT_DIR$/examples/coffee-domain.pddl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/pddl.g4">
+    <entry file="file://$PROJECT_DIR$/Makefile">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/john.pddl">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4140">
-          <caret line="276" column="45" selection-start-line="276" selection-start-column="45" selection-end-line="276" selection-end-column="51" />
+        <state relative-caret-position="450">
+          <caret line="30" column="75" selection-start-line="30" selection-start-column="75" selection-end-line="30" selection-end-column="75" />
         </state>
       </provider>
     </entry>
@@ -590,14 +604,38 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pddlpy/bomb-toilet-domain.pddl">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="23" selection-start-line="9" selection-start-column="23" selection-end-line="9" selection-end-column="23" />
+        <state relative-caret-position="165">
+          <caret line="11" column="20" selection-start-line="11" selection-start-column="20" selection-end-line="11" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/bomb-toilet-problem.pddl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pddlpy/effect.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" column="47" selection-start-line="4" selection-start-column="47" selection-end-line="4" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pddl.g4">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-504">
+          <caret line="278" column="5" selection-start-line="278" selection-start-column="5" selection-end-line="278" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pddlpy/effects.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="30" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="30" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pddlpy/actions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1177">
+        <state relative-caret-position="1257">
           <caret line="86" column="47" selection-start-line="86" selection-start-column="47" selection-end-line="86" selection-end-column="47" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
@@ -605,17 +643,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pddlpy/effect.py">
+    <entry file="file://$PROJECT_DIR$/pddlpy/pddlParser.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="40" lean-forward="true" selection-start-line="10" selection-start-column="40" selection-end-line="10" selection-end-column="40" />
+        <state relative-caret-position="168">
+          <caret line="3749" selection-start-line="3749" selection-end-line="3749" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pddlpy/pddl.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="400" column="47" lean-forward="true" selection-start-line="400" selection-start-column="47" selection-end-line="400" selection-end-column="47" />
+        <state relative-caret-position="210">
+          <caret line="384" column="44" selection-start-line="384" selection-start-column="44" selection-end-line="384" selection-end-column="44" />
           <folding>
             <element signature="e#631#651#0" expanded="true" />
           </folding>

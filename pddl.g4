@@ -269,7 +269,7 @@ fHead
 	;
 
 effect
-	: '(' 'and' cEffect* ')' 
+	: '(' 'and' cEffect* ')'
 	| cEffect
 	;
 
@@ -291,7 +291,7 @@ probEffect
 	;
 
 probabilityEffect
-    : probability cEffect
+    : probability effect
     ;
 
 probability

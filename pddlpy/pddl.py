@@ -25,6 +25,7 @@ from pddlListener import pddlListener
 from pddlVisitor import pddlVisitor
 from actions import Actions
 from effect import Effect
+from effects import Effects
 import itertools
 import numpy as np
 
@@ -293,71 +294,125 @@ class VisitorEvaluator(pddlVisitor):
     def __init__(self, actions):
         self.actions = actions
 
-    def visitProbabilityEffect(self,ctx):
+    def visitProbabilityEffect(self, ctx, combinedEffects, goal ):
         print("probability", ctx.getText())
         prob = self.visitPROB(ctx.probability())
-
-
-        effect = self.visitCEffect(ctx.cEffect())
+        effect = self.visitCEffect(ctx.cEffect(), combinedEffects, goal, prob=prob)
         print(effect)
-        return prob, effect
+        return effect
 
-    def visitProbEffect(self,ctx):
+    def visitProbEffect(self, ctx, combinedEffects, goal):
         prob = 0
         probValueList = []
         probEffectList = []
         probtfList = []
+        effect = None
         #here, we want to know all of the probabilistic effects (there may be more than 1)
         for probEffectIndex in range (len(ctx.probabilityEffect())):
-            probValue, probEffect = self.visitProbabilityEffect(ctx.probabilityEffect()[probEffectIndex])
+            effect = self.visitProbabilityEffect(ctx.probabilityEffect()[probEffectIndex], combinedEffects, goal)
+            '''
             prob += probValue
             probValueList.append(probValue)
             probEffectList.append(probEffect)
             probtfList.append(True)
+            '''
         print("total prob:", prob)
-
+        '''
         if prob < 1.0:
             #handle the null action's prob
             nullProb = 1.0 - prob
             probValueList.append(nullProb)
             probEffectList.append('null')
             probtfList.append(True)
-
-        return probValueList, probEffectList, probtfList
+        '''
+        return effect
 
 
     #may want to start in action (one level above, get name, find associated matrix)
     #otherwise this is start point
     def visitActionDefBody(self,ctx):
+        #for effect in actiondefbody
         print("actiondef", ctx.getText())
-        self.visitEffect(ctx.effect())
+        effect = Effects()
+        self.visitEffect(ctx.effect(), effect)
 
+    def combineEffects ( self, effect1: Effects, combinedEffects : Effects )-> Effects:
+        newCombinedEffects = Effects()
+
+        if combinedEffects.effectPatternList != []:
+            for combination in itertools.product(effect1.effectPatternList, combinedEffects.effectPatternList):
+                newCombinedEffects.effectPatternList.append(combination)
+        else:
+            newCombinedEffects.effectPatternList = effect1.effectPatternList
+
+        if combinedEffects.probList != []:
+            for combination in itertools.product(effect1.probList, combinedEffects.probList):
+                newCombinedEffects.probList.append(combination)
+        else:
+            newCombinedEffects.probList = effect1.probList
+
+        if combinedEffects.valueList != []:
+            for combination in itertools.product(effect1.valueList, combinedEffects.valueList):
+                newCombinedEffects.valueList.append(combination)
+        else:
+            newCombinedEffects.valueList = effect1.valueList
+
+        if combinedEffects.goalPatternList != []:
+            for combination in itertools.product(effect1.goalPatternList, combinedEffects.goalPatternList):
+                newCombinedEffects.goalPatternList.append(combination)
+        else:
+            newCombinedEffects.goalPatternList = effect1.goalPatternList
+
+        return newCombinedEffects
     '''
     effect
 	    : '(' 'and' cEffect* ')' 
 	    | cEffect
 	    ;
     '''
-    def visitEffect(self,ctx):
+    def visitEffect(self,ctx,combinedEffects):
         #within here we want a loop going over all of the effects
         #and indicates a list of effects
         #if and then do a forall
+        #should return a single combinedEffects object
+
         listOfEffects = []
         if '(and' in ctx.getText():
             for effectIndex in range(len(ctx.cEffect())):
-                effect = self.visitCEffect(ctx.cEffect()[effectIndex])
-                if effect is not None:
-                    listOfEffects.append(effect)
-        #get combinations of all effects within the and
-        for combination in itertools.product(list(effect.effectList for effect in listOfEffects)):
-            print(combination)
+                print("effect")
+                effect = self.visitCEffect(ctx.cEffect()[effectIndex], combinedEffects)
+                effect.printInfo()
+                listOfEffects.append(effect)
+        else:
+            self.visitCEffect(ctx.cEffect(), combinedEffects)
+        newCombinedEffects = Effects()
+        '''
+        for combination in itertools.product(*list(effect.effectList for effect in combinedEffects.effectPatternList)):
+            newCombinedEffects.effectPatternList.append(combination)
 
-        for combination in itertools.product(list(effect.probList for effect in listOfEffects)):
-            print(combination)
+        for combination in itertools.product(*list(effect.probList for effect in combinedEffects.probList)):
+            newCombinedEffects.probList.append(combination)
+
+        for combination in itertools.product(*list(effect.effectList for effect in combinedEffects.goalPatternList)):
+            newCombinedEffects.goalPatternList.append(combination)
+
+        for combination in itertools.product(*list(effect.probList for effect in combinedEffects.valueList)):
+            newCombinedEffects.valueList.append(combination)
+        '''
         #get individual effect vectors for each combo of effects
         #get indiv prob for each effect vector (should be same length as number of individual effect vectors
-
+        '''for probIndex in range(len(probEffectList)):
+                targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
+                #must alter target pattern vector each time
+                #have this as one (true for now)
+                predIndex = self.actions.getPredicateIndex(probEffectList[probIndex])
+                if predIndex != -1:
+                    targetPatternVector[predIndex] = tfvalueList[probIndex]
+                print(probValueList[probIndex])
+                self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
         #if no and then just handle one effect
+        '''
+        return newCombinedEffects
 
     def visitPEffect(self,ctx):
         return ctx.getText()
@@ -370,26 +425,30 @@ class VisitorEvaluator(pddlVisitor):
         | probEffect
         ;
     '''
-    def visitCEffect(self,ctx):
-        goalPatternVector = np.full(self.actions.getNumPredicates(), -1)
-        targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
+    def visitCEffect(self,ctx, combinedEffects, goalPatternVector = None, prob=1):
+        if goalPatternVector is None:
+            goalPatternVector = np.full(self.actions.getNumPredicates(), -1)
         #if this is a when clause meaning it has an if condition
+        condEffect = Effects()
         if ctx.goalDesc() is not None:
             goalIndex, value = self.visitGoalDesc(ctx.goalDesc())
             goalPatternVector[goalIndex] = value
+            condEffect = self.visitCondEffect(ctx.condEffect(),combinedEffects, goalPatternVector)
+            return condEffect
+
         #else if it is an effect that will happen regardless then no goal desc at all
         #else just consider as a regular 100% will happen effect
         if ctx.pEffect() is not None:
-            return self.visitPEffect(ctx.pEffect())
+            return self.visitPEffect(ctx.pEffect(), combinedEffects, goalPatternVector, prob)
 
-        if ctx.effect() is not None:
-            effect = self.visitEffect(ctx.effect())
+        #if ctx.effect() is not None:
+        #    return self.visitEffect(ctx.effect())
 
         if ctx.probEffect() is not None:
 
-            probValueList, probEffectList, tfvalueList = self.visitProbEffect(ctx.probEffect())
+            probEffect = self.visitProbEffect(ctx.probEffect(), combinedEffects, goalPatternVector)
             #create probEffect
-            probEffect = Effect(probEffectList, tfvalueList, probValueList)
+            #probEffect = Effect(probEffectList, tfvalueList, probValueList)
             return probEffect
             '''for probIndex in range(len(probEffectList)):
                 targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
@@ -401,8 +460,6 @@ class VisitorEvaluator(pddlVisitor):
                 print(probValueList[probIndex])
                 self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
             '''
-
-        #have to pass in name of action through function
 
     def visitPredicate(self, ctx):
         return ctx.getText()
@@ -436,8 +493,9 @@ class VisitorEvaluator(pddlVisitor):
             value = True
         return predIndex, value
 
-    def visitCondEffect(self,ctx):
-        print("cond effect from goal", ctx.getText())
+    #might have to be changed later on for probability
+    def visitCondEffect(self,ctx, combinedEffects, condition):
+        return self.visitPEffect(ctx.pEffect()[0], combinedEffects, condition, 1)
 
     def visitPROB(self,ctx):
         return float(ctx.getText())
@@ -449,14 +507,27 @@ class VisitorEvaluator(pddlVisitor):
         | atomicTermFormula
         ;
     '''
+    #apply to matrices here at the lowest level so that when unrolling can remove the effects
     #how to adjust for (not (negatives?
-    def visitPEffect(self,ctx):
+    def visitPEffect(self,ctx, combinedEffects, condition, prob):
         #check if pEffect is true/false
         peffect = self.visitAtomicTermFormula(ctx.atomicTermFormula())
-        peffect = Effect([peffect], [True], [1.0])
         print("peffect", peffect)
+        peffectObj = Effects()
+        #take current combined effects list and
+        peffectObj.goalPatternList.append(condition)
+        peffectObj.effectPatternList.append(ctx.getText())
+        peffectObj.valueList.append(1)
+        peffectObj.probList.append(prob)
+        #no condition for this effect
+        combinedEffects = self.combineEffects(peffectObj, combinedEffects)
+        #combinedEffects.goalPatternList.append(condition)
+        #combinedEffects.effectPatternList.append(ctx.getText())
+        #combinedEffects.valueList.append(1)
+        #combinedEffects.probList.append(1.0)
+
         #temp true for now
-        return peffect
+        return combinedEffects
 
 class DomainProblem():
 
