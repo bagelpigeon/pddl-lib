@@ -299,34 +299,40 @@ class VisitorEvaluator(pddlVisitor):
         prob = self.visitPROB(ctx.probability())
         effect = self.visitCEffect(ctx.cEffect(), combinedEffects, goal, prob=prob)
         print(effect)
-        return effect
+        return prob, effect
 
     def visitProbEffect(self, ctx, combinedEffects, goal):
-        prob = 0
-        probValueList = []
-        probEffectList = []
-        probtfList = []
+        probTotal = 0
+        effectList = Effects()
         effect = None
         #here, we want to know all of the probabilistic effects (there may be more than 1)
         for probEffectIndex in range (len(ctx.probabilityEffect())):
-            effect = self.visitProbabilityEffect(ctx.probabilityEffect()[probEffectIndex], combinedEffects, goal)
-            '''
-            prob += probValue
-            probValueList.append(probValue)
-            probEffectList.append(probEffect)
-            probtfList.append(True)
-            '''
-        print("total prob:", prob)
-        '''
-        if prob < 1.0:
-            #handle the null action's prob
-            nullProb = 1.0 - prob
-            probValueList.append(nullProb)
-            probEffectList.append('null')
-            probtfList.append(True)
-        '''
-        return effect
+            prob, effect = self.visitProbabilityEffect(ctx.probabilityEffect()[probEffectIndex], combinedEffects, goal)
+            #combine effect with the effectList below
+            self.addEffects(effectList, effect)
+            probTotal += prob
 
+        if probTotal < 1.0:
+            nullProbEffect = Effects()
+            #handle the null action's prob
+            nullProb = 1.0 - probTotal
+            nullProbEffect.probList.append(nullProb)
+            nullProbEffect.goalPatternList.append(goal)
+            #all null effects will be true for now
+            nullProbEffect.valueList.append(1)
+            nullProbEffect.effectPatternList.append(np.full(self.actions.getNumPredicates(), -1))
+            self.addEffects(effectList, nullProbEffect)
+
+        combinedEffects = self.combineEffects(effectList, combinedEffects)
+        return combinedEffects
+
+    #adds an effect onto the effect list without doing a combination (they are exclusive rather than being multiplied together)
+    def addEffects(self, effectToExpand, effectToAdd):
+        #possibility of more than 1 effect?
+        effectToExpand.probList.append(effectToAdd.probList[0])
+        effectToExpand.valueList.append(effectToAdd.valueList[0])
+        effectToExpand.goalPatternList.append(effectToAdd.goalPatternList[0])
+        effectToExpand.effectPatternList.append(effectToAdd.effectPatternList[0])
 
     #may want to start in action (one level above, get name, find associated matrix)
     #otherwise this is start point
@@ -375,17 +381,15 @@ class VisitorEvaluator(pddlVisitor):
         #and indicates a list of effects
         #if and then do a forall
         #should return a single combinedEffects object
-
-        listOfEffects = []
+        newCombinedEffects = combinedEffects
         if '(and' in ctx.getText():
             for effectIndex in range(len(ctx.cEffect())):
                 print("effect")
                 effect = self.visitCEffect(ctx.cEffect()[effectIndex], combinedEffects)
-                effect.printInfo()
-                listOfEffects.append(effect)
+                newCombinedEffects = self.combineEffects(effect, newCombinedEffects)
         else:
             self.visitCEffect(ctx.cEffect(), combinedEffects)
-        newCombinedEffects = Effects()
+        #newCombinedEffects = Effects()
         '''
         for combination in itertools.product(*list(effect.effectList for effect in combinedEffects.effectPatternList)):
             newCombinedEffects.effectPatternList.append(combination)
@@ -412,6 +416,7 @@ class VisitorEvaluator(pddlVisitor):
                 self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
         #if no and then just handle one effect
         '''
+        newCombinedEffects.printInfo()
         return newCombinedEffects
 
     def visitPEffect(self,ctx):
@@ -424,6 +429,7 @@ class VisitorEvaluator(pddlVisitor):
         | pEffect
         | probEffect
         ;
+    Everything here must also return a combined list of effects 
     '''
     def visitCEffect(self,ctx, combinedEffects, goalPatternVector = None, prob=1):
         if goalPatternVector is None:
@@ -434,12 +440,14 @@ class VisitorEvaluator(pddlVisitor):
             goalIndex, value = self.visitGoalDesc(ctx.goalDesc())
             goalPatternVector[goalIndex] = value
             condEffect = self.visitCondEffect(ctx.condEffect(),combinedEffects, goalPatternVector)
-            return condEffect
+            combinedEffects = self.combineEffects(condEffect, combinedEffects)
+            return combinedEffects
 
         #else if it is an effect that will happen regardless then no goal desc at all
         #else just consider as a regular 100% will happen effect
         if ctx.pEffect() is not None:
-            return self.visitPEffect(ctx.pEffect(), combinedEffects, goalPatternVector, prob)
+            effect =  self.visitPEffect(ctx.pEffect(), combinedEffects, goalPatternVector, prob)
+            return self.combineEffects(effect, combinedEffects)
 
         #if ctx.effect() is not None:
         #    return self.visitEffect(ctx.effect())
@@ -449,7 +457,8 @@ class VisitorEvaluator(pddlVisitor):
             probEffect = self.visitProbEffect(ctx.probEffect(), combinedEffects, goalPatternVector)
             #create probEffect
             #probEffect = Effect(probEffectList, tfvalueList, probValueList)
-            return probEffect
+            combinedEffects = self.combineEffects(probEffect, combinedEffects)
+            return combinedEffects
             '''for probIndex in range(len(probEffectList)):
                 targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
                 #must alter target pattern vector each time
