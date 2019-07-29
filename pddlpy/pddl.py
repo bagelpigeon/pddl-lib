@@ -24,7 +24,7 @@ from pddlParser import pddlParser
 from pddlListener import pddlListener
 from pddlVisitor import pddlVisitor
 from actions import Actions
-from effect import Effect
+from copy import deepcopy
 from effects import Effects
 import itertools
 import numpy as np
@@ -339,9 +339,31 @@ class VisitorEvaluator(pddlVisitor):
     def visitActionDefBody(self,ctx):
         #for effect in actiondefbody
         print("actiondef", ctx.getText())
-        effect = Effects()
-        self.visitEffect(ctx.effect(), effect)
+        effects = Effects()
+        effects = self.visitEffect(ctx.effect(), effects)
+        #now, combine the effect and goal vectors and process effects
+        newEffects = Effects()
+        combinedPattern = np.full(self.actions.getNumPredicates(), -1)
+        for goalPattern in effects.goalPatternList:
+            for pattern in goalPattern:
+                combinedPattern = self.combinePatterns(combinedPattern, pattern)
+        effects.printInfo()
 
+        #now alter the action matrices with the generated effect combinations
+        self.actions.alterActionMatrix('dunk-package', effects)
+
+    #for now ignore patterns that possibly contradict each other
+    def combinePatterns(self, combinedPattern, pattern2):
+        for elementIndex in range(len(combinedPattern)):
+            if pattern2[elementIndex] != 1:
+                combinedPattern[elementIndex] = pattern2[elementIndex]
+
+        return combinedPattern
+
+    '''
+    Gets unique combinations of probability values, goal effects, conditional effects
+    Each unique combination represents a series of states that apply to the combination
+    '''
     def combineEffects ( self, effect1: Effects, combinedEffects : Effects )-> Effects:
         newCombinedEffects = Effects()
 
@@ -416,7 +438,6 @@ class VisitorEvaluator(pddlVisitor):
                 self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
         #if no and then just handle one effect
         '''
-        newCombinedEffects.printInfo()
         return newCombinedEffects
 
     def visitPEffect(self,ctx):
@@ -433,13 +454,26 @@ class VisitorEvaluator(pddlVisitor):
     '''
     def visitCEffect(self,ctx, combinedEffects, goalPatternVector = None, prob=1):
         if goalPatternVector is None:
-            goalPatternVector = np.full(self.actions.getNumPredicates(), -1)
+            goalPatternVector = np.full(self.actions.getNumPredicates()+1, -1)
+            #set last value to true to indicate that this goal should be matched.
+            goalPatternVector[len(goalPatternVector)-1] = 1
         #if this is a when clause meaning it has an if condition
         condEffect = Effects()
         if ctx.goalDesc() is not None:
             goalIndex, value = self.visitGoalDesc(ctx.goalDesc())
             goalPatternVector[goalIndex] = value
             condEffect = self.visitCondEffect(ctx.condEffect(),combinedEffects, goalPatternVector)
+
+            #create another goal vector for states that do not match this goal
+            #but may need to be combined with other goal vectors
+            notGoal = deepcopy(goalPatternVector)
+            notGoal[len(goalPatternVector)-1] = 0
+            #append the notgoal effect to the list of goal desc effects
+            condEffect.goalPatternList.append(notGoal)
+            condEffect.effectPatternList.append(np.full(self.actions.getNumPredicates(), -1))
+            condEffect.probList.append(1.0)
+            condEffect.valueList.append(1)
+            #combine the effects with other effects
             combinedEffects = self.combineEffects(condEffect, combinedEffects)
             return combinedEffects
 
@@ -459,16 +493,6 @@ class VisitorEvaluator(pddlVisitor):
             #probEffect = Effect(probEffectList, tfvalueList, probValueList)
             combinedEffects = self.combineEffects(probEffect, combinedEffects)
             return combinedEffects
-            '''for probIndex in range(len(probEffectList)):
-                targetPatternVector = np.full(self.actions.getNumPredicates(), -1)
-                #must alter target pattern vector each time
-                #have this as one (true for now)
-                predIndex = self.actions.getPredicateIndex(probEffectList[probIndex])
-                if predIndex != -1:
-                    targetPatternVector[predIndex] = tfvalueList[probIndex]
-                print(probValueList[probIndex])
-                self.actions.alterActionMatrix("dunk-package", goalPatternVector, targetPatternVector, probValueList[probIndex])
-            '''
 
     def visitPredicate(self, ctx):
         return ctx.getText()
@@ -484,16 +508,17 @@ class VisitorEvaluator(pddlVisitor):
         else:
             term = self.visitTerm(ctx.term()[0])
         pred = self.visitPredicate(ctx.predicate())
-        return pred + term
+        predIndex = self.actions.getPredicateIndex(pred+term)
+        #print("predicate", pred)
+        return pred + term, predIndex
 
     def visitGoalDesc(self,ctx):
         #account for all objects later
 
-        text = self.visitAtomicTermFormula(ctx.atomicTermFormula())
-        print("goaldesc", text)
-        predIndex = self.actions.getPredicateIndex(text)
+        _, predIndex = self.visitAtomicTermFormula(ctx.atomicTermFormula())
+        #print("goaldesc", text)
+        #predIndex = self.actions.getPredicateIndex(text)
         #-1 as a fill value for all values that are allowed to be wildcards
-        goalStateEncode = np.full(self.actions.getNumPredicates(), -1)
 
         #if goal desc has a not, this should return a false!
         if '(not' in ctx.getText():
@@ -520,23 +545,25 @@ class VisitorEvaluator(pddlVisitor):
     #how to adjust for (not (negatives?
     def visitPEffect(self,ctx, combinedEffects, condition, prob):
         #check if pEffect is true/false
+        effectPattern = np.full(self.actions.getNumPredicates(), -1)
         peffect = self.visitAtomicTermFormula(ctx.atomicTermFormula())
-        print("peffect", peffect)
         peffectObj = Effects()
         #take current combined effects list and
         peffectObj.goalPatternList.append(condition)
-        peffectObj.effectPatternList.append(ctx.getText())
-        peffectObj.valueList.append(1)
+        #peffectObj.effectPatternList.append(ctx.getText())
+        _, predIndex = self.visitAtomicTermFormula(ctx.atomicTermFormula())
+        if ('(not' in ctx.getText()):
+            peffectObj.valueList.append(0)
+            effectPattern[predIndex] = 0
+        else:
+            peffectObj.valueList.append(1)
+            effectPattern[predIndex] = 1
+        peffectObj.effectPatternList.append(effectPattern)
         peffectObj.probList.append(prob)
         #no condition for this effect
         combinedEffects = self.combineEffects(peffectObj, combinedEffects)
-        #combinedEffects.goalPatternList.append(condition)
-        #combinedEffects.effectPatternList.append(ctx.getText())
-        #combinedEffects.valueList.append(1)
-        #combinedEffects.probList.append(1.0)
-
-        #temp true for now
         return combinedEffects
+
 
 class DomainProblem():
 

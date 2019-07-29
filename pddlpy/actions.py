@@ -35,12 +35,49 @@ class Actions():
 
     '''
     returns a true if the state encoding matches the vector pattern
+    Vector pattern format is this
+    x are the values for each predicate
+    t is a flag indicating whether this pattern should be matched exactly or
+    if the state vector should be matched as a notGoal
+    This means that if there is only one predicate called isRaining and a state is supposed to match this vec
+    it will be [1,1]
+    Fro all other states, a vector match could be [1,0] where the isRaining is false in that state, but 0 indicates that
+    the state isn't supposed to match this vector;
+    [x, x, x, t]
+    this has to be changed to take into account states that are not supposed to match
     '''
     def matchStateEncodings (self, stateVectorPattern, stateEncode):
-        for trueFalseValueIndex in range (len(stateVectorPattern)):
-            #ignore the -1 they are counted as wildcards
+        if stateVectorPattern[len(stateVectorPattern)-1] == 1:
+            for trueFalseValueIndex in range (len(stateVectorPattern)-1):
+                #ignore the -1 they are counted as wildcards
+                if stateVectorPattern[trueFalseValueIndex] != -1:
+                    if stateVectorPattern[trueFalseValueIndex] != stateEncode[trueFalseValueIndex]:
+                        return False
+        else:
+            for trueFalseValueIndex in range (len(stateVectorPattern)-1):
+                #ignore the -1 they are counted as wildcards
+                if stateVectorPattern[trueFalseValueIndex] != -1:
+                    if stateVectorPattern[trueFalseValueIndex] == stateEncode[trueFalseValueIndex]:
+                        return False
+        return True
+
+    def matchStateEncodingsUnconditional(self, stateVectorPattern, stateEncode):
+        for trueFalseValueIndex in range(len(stateVectorPattern)):
+            # ignore the -1 they are counted as wildcards
             if stateVectorPattern[trueFalseValueIndex] != -1:
-                if stateVectorPattern[trueFalseValueIndex]!=stateEncode[trueFalseValueIndex]:
+                if stateVectorPattern[trueFalseValueIndex] != stateEncode[trueFalseValueIndex]:
+                    return False
+    '''
+    This matches a list of effect patterns
+    Primarily used to search for states that match a list of goal descriptions
+    '''
+    def matchListOfStateEncodings(self, patternList, stateVector, unconditional=True):
+        for pattern in patternList:
+            if unconditional == False:
+                if self.matchStateEncodings(pattern, stateVector) == False:
+                    return False
+            else:
+                if self.matchStateEncodingsUnconditional(pattern, stateVector) == False:
                     return False
         return True
 
@@ -53,43 +90,53 @@ class Actions():
                 return False
         return True
 
-    def getNextState(self, state, effectPattern):
+    def getNextState(self, state, effectPatternList):
         newState = list(copy.deepcopy(state))
-        for predIndex in range(len(state)):
-            if effectPattern[predIndex] != -1:
-                newState[predIndex] = effectPattern[predIndex]
+        for effectPattern in effectPatternList:
+            for predIndex in range(len(state)):
+                if effectPattern[predIndex] != -1:
+                    newState[predIndex] = effectPattern[predIndex]
         return newState
 
-    def alterActionMatrix(self, nameOfAction, stateVectorPattern, effectVectorPattern, prob):
-
+    #def alterActionMatrix(self, nameOfAction, stateVectorPatternList, effectVectorPattern, prob):
+    def alterActionMatrix(self, nameOfAction, effects):
         actionIndex = self.actionDict[nameOfAction]
         tMatrixOfAction = self.transitionMatrices[actionIndex]
+        for effectComboIndex in range(len(effects.effectPatternList)):
+            stateVectorPatternList = effects.goalPatternList[effectComboIndex]
+            effectVectorPattern = effects.effectPatternList[effectComboIndex]
+            probList = effects.probList[effectComboIndex]
 
-        #get all states that match the stateVector pattern, -1s are wildcards
-        rowsToChange = []
-        columnsToChange = []
-        for stateIndex in range(len(self.stateEncodings)):
-            if self.matchStateEncodings(stateVectorPattern, self.stateEncodings[stateIndex]):
-                rowsToChange.append(stateIndex)
-            if self.matchStateEncodings(effectVectorPattern, self.stateEncodings[stateIndex]):
-                columnsToChange.append(stateIndex)
-        #have issue, do columns and rows match up? how to match them?
+            #calculate probability by looping over entire list and multiplying by all probs in list
+            prob = 1.0
+            for probability in probList:
+                prob = prob * probability
 
-        # have to be relative to each state! so for every state that will be affected, get the next state for each of them
-        for i in range(len(rowsToChange)):
-            row = rowsToChange[i]
-            state = self.stateEncodings[i]
-            nextState = self.getNextState(state, effectVectorPattern)
+            #get all states that match the stateVector pattern, -1s are wildcards
+            rowsToChange = []
+            columnsToChange = []
+            for stateIndex in range(len(self.stateEncodings)):
+                if self.matchListOfStateEncodings(stateVectorPatternList, self.stateEncodings[stateIndex], unconditional=False):
+                    rowsToChange.append(stateIndex)
+                if self.matchListOfStateEncodings(effectVectorPattern, self.stateEncodings[stateIndex]):
+                    columnsToChange.append(stateIndex)
+            #have issue, do columns and rows match up? how to match them?
 
-            #means the state did not change
-            if self.exactMatchStateEncodings(nextState, state) != True:
-                for column in columnsToChange:
-                    if self.exactMatchStateEncodings(self.stateEncodings[column], nextState):
-                        #column = columnsToChange[j]
-                        if tMatrixOfAction[row][column] == 0:
-                            tMatrixOfAction[row][column] = prob
-                        else:
-                            tMatrixOfAction[row][column] *= prob
+            # have to be relative to each state! so for every state that will be affected, get the next state for each of them
+            for i in range(len(rowsToChange)):
+                row = rowsToChange[i]
+                state = self.stateEncodings[i]
+                nextState = self.getNextState(state, effectVectorPattern)
+
+                #means the state did not change
+                if self.exactMatchStateEncodings(nextState, state) != True:
+                    for column in columnsToChange:
+                        if self.exactMatchStateEncodings(self.stateEncodings[column], nextState):
+                            #column = columnsToChange[j]
+                            if tMatrixOfAction[row][column] == 0:
+                                tMatrixOfAction[row][column] = prob
+                            else:
+                                tMatrixOfAction[row][column] *= prob
         print(self.printInfo())
 
     def getPredicateIndex(self, nameOfPredicate):
